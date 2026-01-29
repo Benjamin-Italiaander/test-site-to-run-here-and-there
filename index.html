@@ -4,8 +4,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Benjamin Italiaander</title>
-    
-    <link rel="stylesheet" href="full.css">
+
+    <!-- WebTUI -->
+    <link rel="stylesheet" href="full.css" />
+    <!-- OpenPGP.js -->
+    <script src="./openpgp.min.js"></script>
 
     <style>
       @layer base {
@@ -13,10 +16,10 @@
           --font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
             "Courier New", monospace;
           --font-size: 16px;
-          --line-height: 1.35;
+          --line-height: 1.5;
         }
 
-        /* Theme presets (similar to stefvuck's picker list) */
+        /* Chocolate theme only */
         html[data-theme="chocolate"] {
           --background0: #120a08;
           --background1: #1a0f0c;
@@ -33,114 +36,77 @@
 
           --accent: #c58b4f;
           --accent2: #4dd4a3;
-        }
-
-        html[data-theme="tokyo-night"] {
-          --background0: #0b1020;
-          --background1: #0f1630;
-          --background2: #151f3f;
-          --background3: #1b2850;
-
-          --foreground0: #d7e0ff;
-          --foreground1: #aab7e6;
-          --foreground2: #7f90c8;
-
-          --box-border-color: var(--foreground2);
-          --table-border-color: var(--foreground2);
-          --separator-color: var(--foreground2);
-
-          --accent: #7aa2f7;
-          --accent2: #9ece6a;
-        }
-
-        html[data-theme="dracula"] {
-          --background0: #0f0b16;
-          --background1: #181226;
-          --background2: #221a35;
-          --background3: #2d2347;
-
-          --foreground0: #f8f8f2;
-          --foreground1: #cfcfe6;
-          --foreground2: #a7a7c7;
-
-          --box-border-color: var(--foreground2);
-          --table-border-color: var(--foreground2);
-          --separator-color: var(--foreground2);
-
-          --accent: #bd93f9;
-          --accent2: #50fa7b;
-        }
-
-        html[data-theme="monokai"] {
-          --background0: #0d0f0d;
-          --background1: #141814;
-          --background2: #1a201a;
-          --background3: #223022;
-
-          --foreground0: #f8f8f2;
-          --foreground1: #d6d6cf;
-          --foreground2: #b0b0a6;
-
-          --box-border-color: var(--foreground2);
-          --table-border-color: var(--foreground2);
-          --separator-color: var(--foreground2);
-
-          --accent: #a6e22e;
-          --accent2: #fd971f;
+          --danger: #ff6b8a;
+          --ok: #4dd4a3;
         }
       }
 
-      /* Page scaffolding: closer to stefvuck spacing */
       .wrap {
         max-width: 980px;
         margin: 0 auto;
         padding: 18px 18px 10px;
       }
 
+      /* Top nav */
       .topbar {
-        display: grid;
-        grid-template-columns: 1fr auto 1fr;
+        display: flex;
         align-items: center;
-        gap: 10px;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
         margin-bottom: 12px;
       }
 
       .brand {
         font-weight: 700;
         letter-spacing: 0.2px;
-      }
-
-      .theme-picker {
         display: inline-flex;
-        align-items: center;
         gap: 10px;
-        color: var(--foreground1);
+        align-items: baseline;
       }
-
-      .theme-picker button {
-        background: transparent;
-        border: 1px solid var(--foreground2);
-        color: var(--foreground1);
-        padding: 2px 10px;
-        border-radius: 6px;
-        cursor: pointer;
-      }
-
-      .theme-name {
-        min-width: 110px;
-        text-align: center;
-        color: var(--foreground0);
-      }
-
-      .right-slot {
-        justify-self: end;
+      .brand .sub {
         color: var(--foreground2);
+        font-weight: 400;
+        font-size: 14px;
       }
 
+      .nav {
+        display: inline-flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .nav a {
+        text-decoration: none;
+        color: var(--foreground1);
+        border: 1px solid var(--foreground2);
+        padding: 4px 10px;
+        border-radius: 12px;
+        background: color-mix(in srgb, var(--background1) 85%, transparent);
+      }
+      .nav a:hover { border-color: var(--accent); }
+      .nav a[aria-current="page"] {
+        color: var(--foreground0);
+        border-color: var(--accent);
+      }
+
+      .muted { color: var(--foreground1); }
+      a.inline {
+        color: var(--foreground0);
+        text-decoration: underline;
+        text-decoration-color: var(--foreground2);
+      }
+      a.inline:hover { text-decoration-color: var(--accent); }
+
+      /* Pages */
+      .page { display: none; }
+      .page.active { display: block; }
+
+      /* Hero terminal (short, readable) */
       .terminal {
         white-space: pre-wrap;
-        line-height: 1.45;
-        margin-top: 10px;
+        line-height: 1.6;
       }
       .prompt { color: var(--foreground1); }
       .cmd { color: var(--foreground0); }
@@ -153,34 +119,94 @@
       }
       @keyframes blink { 50% { opacity: 0; } }
 
-      .cta-row {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        flex-wrap: wrap;
-        margin-top: 14px;
-      }
-
-      .stats {
+      /* Layout blocks */
+      .grid-2 {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: 1fr 1fr;
         gap: 12px;
-        margin-top: 14px;
+        margin-top: 12px;
       }
-      @media (max-width: 800px) {
-        .topbar { grid-template-columns: 1fr; }
-        .right-slot { justify-self: start; }
-        .stats { grid-template-columns: 1fr; }
+      @media (max-width: 900px) {
+        .grid-2 { grid-template-columns: 1fr; }
       }
 
-      .stat-num {
-        font-size: 26px;
-        font-weight: 800;
-        line-height: 1.1;
+      .card h2 {
+        margin: 0 0 10px;
+        font-size: 18px;
       }
-      .muted { color: var(--foreground1); }
+      .card p { margin: 10px 0; }
 
-      /* Bottom statusline (vim-ish) */
+      .quote {
+        margin: 10px 0 12px;
+        padding: 10px 12px;
+        border: 1px solid var(--foreground2);
+        border-radius: 12px;
+        color: var(--foreground1);
+        background: color-mix(in srgb, var(--background1) 85%, transparent);
+      }
+
+      /* PGP tool */
+      .row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .mini {
+        font-size: 14px;
+        color: var(--foreground2);
+      }
+
+      textarea.tui {
+        width: 100%;
+        min-height: 140px;
+        resize: vertical;
+        border: 1px solid var(--foreground2);
+        border-radius: 12px;
+        padding: 12px;
+        background: color-mix(in srgb, var(--background1) 88%, transparent);
+        color: var(--foreground0);
+        font-family: var(--font-family);
+        line-height: 1.45;
+      }
+
+      pre.out {
+        margin: 0;
+        min-height: 140px;
+        border: 1px solid var(--foreground2);
+        border-radius: 12px;
+        padding: 12px;
+        background: color-mix(in srgb, var(--background1) 88%, transparent);
+        color: var(--foreground0);
+        white-space: pre-wrap;
+        word-break: break-word;
+        overflow: auto;
+      }
+
+      .pill {
+        display: inline-flex;
+        gap: 8px;
+        align-items: center;
+        padding: 3px 10px;
+        border: 1px solid var(--foreground2);
+        border-radius: 999px;
+        color: var(--foreground1);
+        background: color-mix(in srgb, var(--background1) 85%, transparent);
+      }
+      .pill b { color: var(--foreground0); }
+
+      .callout {
+        padding: 12px 12px;
+        border: 1px solid var(--foreground2);
+        border-radius: 12px;
+        background: color-mix(in srgb, var(--background2) 70%, transparent);
+      }
+
+      .ok { color: var(--ok); }
+      .bad { color: var(--danger); }
+
       .statusline {
         display: flex;
         justify-content: space-between;
@@ -189,183 +215,455 @@
         color: var(--foreground2);
         font-size: 14px;
       }
-
-      /* Help overlay */
-      .overlay {
-        position: fixed;
-        inset: 0;
-        background: color-mix(in srgb, var(--background0) 80%, transparent);
-        display: none;
-        align-items: center;
-        justify-content: center;
-        padding: 18px;
-      }
-      .overlay.open { display: flex; }
-
-      .kbd {
-        padding: 0 7px;
-        border: 1px solid var(--foreground2);
-        border-radius: 6px;
-        color: var(--foreground0);
-      }
     </style>
   </head>
 
   <body>
     <div class="wrap">
+      <!-- Topbar / nav -->
       <header class="topbar">
-        <div class="brand">ABOUT ME BENJAMIN</div>
-
-        <div class="theme-picker">
-          <button id="prevTheme" aria-label="Previous theme">‹</button>
-          <div class="theme-name" id="themeLabel">Chocolate</div>
-          <button id="nextTheme" aria-label="Next theme">›</button>
+        <div class="brand">
+          <span>Benjamin Italiaander</span>
+          <span class="sub">Linux security</span>
         </div>
 
-        <div class="right-slot">
-          <span class="muted">Press</span> <span class="kbd">?</span> <span class="muted">for help</span>
-        </div>
+        <nav class="nav" aria-label="Primary">
+          <a href="#home" id="nav-home">Home</a>
+          <a href="#pgp" id="nav-pgp">PGP Encrypt</a>
+          <a href="#contact" id="nav-contact">Contact</a>
+        </nav>
       </header>
 
-   <section box-="square">
-  <div class="terminal" id="terminal">
-    <span class="prompt">$</span> <span class="cmd">cat</span> <span class="path">/home/benjamin/about.txt</span>
+      <!-- PAGE: HOME -->
+      <main id="page-home" class="page">
+        <section box-="square">
+          <div class="terminal">
+<span class="prompt">$</span> <span class="cmd">cat</span> <span class="path">/home/benjamin/about.txt</span>
 
-    Hi, I’m <span style="color:var(--accent2);font-weight:700;">Benjamin Italiaander</span>.
-    Linux fanatic • Infra / Security / Open Source • Western Europe
+Hi, I’m <span style="color:var(--accent2);font-weight:700;">Benjamin Italiaander</span>.
+Linux fanatic • Infra / Security / Open Source • Western Europe
 
-    <span class="prompt">$</span> <span class="cmd">open</span> about --readable <span class="cursor">█</span>
-  </div>
+<span class="prompt">$</span> <span class="cmd">open</span> links --quick <span class="cursor">█</span>
+          </div>
 
-  <div is-="separator" style="margin:14px 0;"></div>
+          <div is-="separator" style="margin:14px 0;"></div>
 
-  <div class="content-grid">
-    <section box-="square" class="card">
-      <h2 style="margin-top:0;">About</h2>
-      <p class="muted">
-        Based in Western Europe, I primarily collaborate with research institutes, universities,
-        and government agencies across the Netherlands, Belgium, and Germany.
-      </p>
-      <p class="muted">
-        I help organizations take back ownership and control over their data by designing
-        open-source-first platforms and sovereign hosting environments.
-      </p>
-    </section>
+          <div class="grid-2">
+            <section box-="square" class="card">
+              <h2>About</h2>
+              <p class="muted">
+                Based in Western Europe, I collaborate with research institutes, universities,
+                and government agencies across the Netherlands, Belgium, and Germany.
+              </p>
+              <p class="muted">
+                I help organizations regain ownership and control over their data by designing
+                open-source-first platforms and sovereign hosting environments.
+              </p>
+              <p class="muted">
+                Want to send me something sensitive? Use
+                <a class="inline" href="#pgp">PGP Encrypt</a>.
+              </p>
+            </section>
 
-    <section box-="square" class="card">
-      <h2 style="margin-top:0;">What I’m building</h2>
-      <blockquote class="quote">
-        Over the past decade, major tech companies have accumulated vast amounts of data within
-        their cloud platforms. More institutions are now weighing the risks: security, control,
-        and ownership.
-      </blockquote>
+            <section box-="square" class="card">
+              <h2>Publications & profiles</h2>
+              <ul style="margin:0; padding-left:18px;">
+                <li><b>PLOS</b> — <a class="inline" href="https://journals.plos.org" target="_blank" rel="noreferrer">journals.plos.org</a></li>
+                <li><b>KNAW Pure</b> — <a class="inline" href="https://pure.knaw.nl" target="_blank" rel="noreferrer">pure.knaw.nl</a></li>
+                <li><b>CWI Research Repository</b> — <a class="inline" href="https://ir.cwi.nl/" target="_blank" rel="noreferrer">ir.cwi.nl</a></li>
+                <li><b>GitHub</b> — <a class="inline" href="https://github.com/Benjamin-Italiaander" target="_blank" rel="noreferrer">github.com/Benjamin-Italiaander</a></li>
+                <li><b>ResearchGate</b> — <a class="inline" href="https://www.researchgate.net/profile/Benjamin-Italiaander" target="_blank" rel="noreferrer">Profile</a></li>
+              </ul>
+            </section>
 
-      <p class="muted">
-        I’m developing a practical blueprint for building independent digital collaboration hubs
-        (email, identity, enterprise apps, and infrastructure) with a strong focus on rollout strategy
-        and operational reality.
-      </p>
+            <section box-="square" class="card">
+              <h2>What I’m building</h2>
+              <div class="quote">
+                I’m developing a practical blueprint for independent digital collaboration hubs
+                (email, identity, enterprise apps, and infrastructure), focused on rollout strategy
+                and operational reality.
+              </div>
+              <p class="muted">
+                I’m fortunate that
+                <a class="inline" href="https://www.cwi.nl/en/" target="_blank" rel="noreferrer">CWI</a>
+                is giving me space to help realize this vision.
+              </p>
+            </section>
 
-      <p class="muted">
-        I’m fortunate that
-        <a href="https://www.cwi.nl/en/" target="_blank" rel="noreferrer">CWI</a>
-        is giving me space to help realize this vision.
-      </p>
-    </section>
+            <section box-="square" class="card">
+              <h2>Quick focus</h2>
+              <table>
+                <tbody>
+                  <tr><td>Areas</td><td class="muted">Linux • Networking • Identity • Email • Security</td></tr>
+                  <tr><td>Style</td><td class="muted">Pragmatic • Documented • Automation-friendly</td></tr>
+                  <tr><td>Goal</td><td class="muted">Sovereign, maintainable platforms teams can run</td></tr>
+                </tbody>
+              </table>
+            </section>
+          </div>
+        </section>
+      </main>
 
-    <section box-="square" class="card">
-      <h2 style="margin-top:0;">Publications & profiles</h2>
-      <ul class="links">
-        <li><strong>PLOS</strong> — <a href="https://journals.plos.org" target="_blank" rel="noreferrer">journals.plos.org</a></li>
-        <li><strong>KNAW Pure Repository</strong> — <a href="https://pure.knaw.nl" target="_blank" rel="noreferrer">pure.knaw.nl</a></li>
-        <li><strong>CWI Research Repository</strong> — <a href="https://ir.cwi.nl/" target="_blank" rel="noreferrer">ir.cwi.nl</a></li>
-        <li><strong>ResearchGate</strong> — <a href="https://www.researchgate.net/profile/Benjamin-Italiaander" target="_blank" rel="noreferrer">Profile</a></li>
-      </ul>
-    </section>
+      <!-- PAGE: PGP -->
+      <main id="page-pgp" class="page">
+        <section box-="square">
+          <div class="row">
+            <div>
+              <h2 style="margin:0;">PGP Encrypt</h2>
+              <div class="mini">Encrypt a message to me using my public key (runs locally in your browser).</div>
+            </div>
 
-    <section box-="square" class="card">
-      <h2 style="margin-top:0;">Quick focus</h2>
-      <table>
-        <tbody>
-          <tr><td>Areas</td><td class="muted">Linux • Networking • Identity • Email • Security</td></tr>
-          <tr><td>Style</td><td class="muted">Pragmatic • Documented • Automation-friendly</td></tr>
-          <tr><td>Goal</td><td class="muted">Sovereign, maintainable platforms that teams can run</td></tr>
-        </tbody>
-      </table>
+            <div class="pill" title="Loaded public key fingerprint">
+              <span class="muted">fingerprint</span>
+              <b id="fp">loading…</b>
+            </div>
+          </div>
 
-    </section>
-  </div>
-</section>
+          <div is-="separator" style="margin:14px 0;"></div>
 
+          <div class="callout">
+            <div style="font-weight:700; margin-bottom:6px;">How to use</div>
+            <ol style="margin:0; padding-left:18px;">
+              <li>Paste your text below.</li>
+              <li>Click <b>Encrypt →</b>.</li>
+              <li>Copy the encrypted output and paste it into an email to me (I’ll decrypt it later).</li>
+            </ol>
+            <div class="mini" style="margin-top:10px;">
+              <b>Security note:</b> encryption happens <b>locally on your machine</b> using OpenPGP.js.
+              If the device doing the encryption is clean (no malware / no malicious extensions), the ciphertext is
+              strongly protected by my public key — only my private key can decrypt it.
+            </div>
+          </div>
+
+          <div class="row" style="margin:12px 0 8px;">
+            <div class="mini" id="status">Loading key…</div>
+            <div class="mini"><span id="count">0</span> chars</div>
+          </div>
+
+          <textarea id="message" class="tui" placeholder="Text to encrypt"></textarea>
+
+          <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+            <button id="encryptBtn" variant-="foreground0" disabled>Encrypt →</button>
+            <button id="copyBtn" variant-="foreground0" disabled>Copy output</button>
+            <button id="clearBtn" variant-="foreground0">Clear</button>
+          </div>
+
+          <div>
+            
+              <h2 style="font-size:16px; margin:0 0 10px;">Encrypted output</h2>
+              <pre id="result" class="out"></pre>
+            <h2 style="font-size:16px; margin:14px 0 10px;">Errors / debug</h2>
+            <pre id="debug" class="out"></pre>
+
+          </div>
+
+          <!-- Embed the public key here -->
+          <script type="text/plain" id="pgp-public-key">
+-----BEGIN PGP PUBLIC KEY BLOCK-----
+
+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
+=GPN3
+-----END PGP PUBLIC KEY BLOCK-----
+          </script>
+        </section>
+      </main>
+
+      <!-- PAGE: CONTACT -->
+      <main id="page-contact" class="page">
+        <section box-="square">
+          <h2 style="margin-top:0;">Contact</h2>
+          <p class="muted">
+            The easiest way: send me an email. If it’s sensitive, encrypt it first via
+            <a class="inline" href="#pgp">PGP Encrypt</a>.
+          </p>
+
+          <div is-="separator" style="margin:14px 0;"></div>
+
+          <table>
+            <tbody>
+              <tr>
+                <td>Email</td>
+                <td class="muted">
+                  <span id="email">benjamin@tlnd.nl</span>
+                  <button id="copyEmail" variant-="foreground0" style="margin-left:10px;">Copy</button>
+                </td>
+              </tr>
+              <tr>
+                <td>PGP</td>
+                <td class="muted">Use the Encrypt page and paste the ciphertext into an email.</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div style="margin-top:14px;" class="callout">
+            <div style="font-weight:700; margin-bottom:6px;">Tip</div>
+            <div class="mini">
+              If you paste a PGP block in your email, please include a short non-sensitive line like:
+              “Encrypted message for Benjamin” so I don’t miss it.
+            </div>
+          </div>
+        </section>
+      </main>
 
       <footer class="statusline">
-        <div id="leftStatus"> ~/ · # · index.html · utf-8</div>
-        <div id="rightStatus">Top 1:1</div>
+        <div id="leftStatus">~/ · benjamin.italiaander · index.html · utf-8</div>
+        <div id="rightStatus">#home</div>
       </footer>
     </div>
 
-    <!-- Help overlay -->
-    <div class="overlay" id="help">
-      <div box-="square" style="max-width:720px; width:100%;">
-        <h3 style="margin-top:0;">Keyboard Shortcuts</h3>
-        <div is-="separator" style="margin:12px 0;"></div>
-        <table>
-          <tbody>
-            <tr><td><span class="kbd">?</span></td><td class="muted">Toggle help</td></tr>
-            <tr><td><span class="kbd">t</span></td><td class="muted">Next theme</td></tr>
-            <tr><td><span class="kbd">Shift</span>+<span class="kbd">t</span></td><td class="muted">Previous theme</td></tr>
-            <tr><td><span class="kbd">Esc</span></td><td class="muted">Close help</td></tr>
-          </tbody>
-        </table>
-        
-    </div>
-
     <script>
-      const THEMES = [
-        { key: "chocolate", label: "Chocolate" },
-        { key: "tokyo-night", label: "Tokyo Night" },
-        { key: "dracula", label: "Dracula" },
-        { key: "monokai", label: "Monokai" },
+      // ---------- Tiny router (3 pages, 1 file) ----------
+      const pages = [
+        { hash: "#home", el: document.getElementById("page-home"), nav: document.getElementById("nav-home") },
+        { hash: "#pgp", el: document.getElementById("page-pgp"), nav: document.getElementById("nav-pgp") },
+        { hash: "#contact", el: document.getElementById("page-contact"), nav: document.getElementById("nav-contact") },
       ];
 
-      const root = document.documentElement;
-      const label = document.getElementById("themeLabel");
-      const prevBtn = document.getElementById("prevTheme");
-      const nextBtn = document.getElementById("nextTheme");
-      const help = document.getElementById("help");
-
-      function getThemeIndex() {
-        const current = root.getAttribute("data-theme") || "chocolate";
-        return Math.max(0, THEMES.findIndex(t => t.key === current));
+      function showPage(hash) {
+        const target = pages.find(p => p.hash === hash) || pages[0];
+        for (const p of pages) {
+          p.el.classList.toggle("active", p === target);
+          p.nav.setAttribute("aria-current", p === target ? "page" : "false");
+        }
+        document.getElementById("rightStatus").textContent = target.hash;
       }
 
-      function setThemeByIndex(i) {
-        const idx = (i + THEMES.length) % THEMES.length;
-        root.setAttribute("data-theme", THEMES[idx].key);
-        label.textContent = THEMES[idx].label;
-      }
+      window.addEventListener("hashchange", () => showPage(location.hash));
+      if (!location.hash) location.hash = "#home";
+      showPage(location.hash);
 
-      prevBtn.addEventListener("click", () => setThemeByIndex(getThemeIndex() - 1));
-      nextBtn.addEventListener("click", () => setThemeByIndex(getThemeIndex() + 1));
-
-      function toggleHelp(open) {
-        const isOpen = open ?? !help.classList.contains("open");
-        help.classList.toggle("open", isOpen);
-      }
-
-      window.addEventListener("keydown", (e) => {
-        if (e.key === "?") toggleHelp(true);
-        if (e.key === "Escape") toggleHelp(false);
-
-        if (e.key.toLowerCase() === "t") {
-          if (e.shiftKey) setThemeByIndex(getThemeIndex() - 1);
-          else setThemeByIndex(getThemeIndex() + 1);
+      // ---------- Contact: copy email ----------
+      document.getElementById("copyEmail").addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(document.getElementById("email").textContent.trim());
+          alert("Copied!");
+        } catch {
+          alert("Clipboard blocked by the browser.");
         }
       });
 
-      help.addEventListener("click", (e) => {
-        if (e.target === help) toggleHelp(false);
+      // ---------- PGP TOOL ----------
+      let publicKey;
+
+      const statusEl = document.getElementById("status");
+      const debugEl = document.getElementById("debug");
+      const resultEl = document.getElementById("result");
+      const msgEl = document.getElementById("message");
+      const encryptBtn = document.getElementById("encryptBtn");
+      const copyBtn = document.getElementById("copyBtn");
+      const clearBtn = document.getElementById("clearBtn");
+      const fpEl = document.getElementById("fp");
+      const countEl = document.getElementById("count");
+
+      function setStatus(msg, ok=null) {
+        statusEl.textContent = msg;
+        statusEl.classList.remove("ok","bad");
+        if (ok === true) statusEl.classList.add("ok");
+        if (ok === false) statusEl.classList.add("bad");
+      }
+      function setDebug(msg) {
+        debugEl.textContent = String(msg ?? "");
+      }
+
+      msgEl.addEventListener("input", () => {
+        countEl.textContent = String(msgEl.value.length);
       });
+
+      async function loadPublicKeyFromHtml() {
+        try {
+          const armored = document.getElementById("pgp-public-key").textContent.trim();
+          if (!armored.includes("BEGIN PGP PUBLIC KEY BLOCK")) {
+            throw new Error("Embedded key not found (missing BEGIN PGP PUBLIC KEY BLOCK).");
+          }
+
+          publicKey = await openpgp.readKey({ armoredKey: armored });
+          const fp = publicKey.getFingerprint();
+          fpEl.textContent = fp.slice(0, 8) + "…" + fp.slice(-8);
+
+          setStatus("Public key loaded ✅", true);
+          encryptBtn.disabled = false;
+          setDebug("Key fingerprint: " + fp);
+        } catch (e) {
+          setStatus("Failed to load public key ❌", false);
+          setDebug(e && e.stack ? e.stack : e);
+        }
+      }
+
+      async function encrypt() {
+        try {
+          const text = msgEl.value;
+          if (!text) throw new Error("No message to encrypt.");
+
+          setStatus("Encrypting…", null);
+
+          const encrypted = await openpgp.encrypt({
+            message: await openpgp.createMessage({ text }),
+            encryptionKeys: publicKey,
+          });
+
+          resultEl.textContent = encrypted;
+          copyBtn.disabled = false;
+          setStatus("Encrypted ✅ (paste into an email to me)", true);
+          setDebug("Encrypted OK ✅");
+        } catch (e) {
+          setStatus("Encryption failed ❌", false);
+          setDebug(e && e.stack ? e.stack : e);
+        }
+      }
+
+      async function copyOutput() {
+        try {
+          const txt = resultEl.textContent.trim();
+          if (!txt) return;
+          await navigator.clipboard.writeText(txt);
+          setStatus("Copied ✅ (paste into an email to me)", true);
+        } catch (e) {
+          setStatus("Copy failed (browser blocked clipboard) ❌", false);
+          setDebug(e && e.stack ? e.stack : e);
+        }
+      }
+
+      function clearAll() {
+        msgEl.value = "";
+        resultEl.textContent = "";
+        setDebug("");
+        copyBtn.disabled = true;
+        countEl.textContent = "0";
+        setStatus(publicKey ? "Ready." : "Loading key…", null);
+      }
+
+      encryptBtn.addEventListener("click", encrypt);
+      copyBtn.addEventListener("click", copyOutput);
+      clearBtn.addEventListener("click", clearAll);
+
+      loadPublicKeyFromHtml();
     </script>
   </body>
 </html>
