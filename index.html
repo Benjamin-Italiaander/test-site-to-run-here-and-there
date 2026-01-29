@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="en" data-webtui-theme="dark" data-theme="chocolate">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Benjamin Italiaander</title>
+    
+    <link rel="stylesheet" href="full.css">
+
+    <style>
+      @layer base {
+        :root {
+          --font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+            "Courier New", monospace;
+          --font-size: 16px;
+          --line-height: 1.35;
+        }
+
+        /* Theme presets (similar to stefvuck's picker list) */
+        html[data-theme="chocolate"] {
+          --background0: #120a08;
+          --background1: #1a0f0c;
+          --background2: #23130f;
+          --background3: #2f1a14;
+
+          --foreground0: #f6efe6;
+          --foreground1: #d7c7b6;
+          --foreground2: #b39c89;
+
+          --box-border-color: var(--foreground2);
+          --table-border-color: var(--foreground2);
+          --separator-color: var(--foreground2);
+
+          --accent: #c58b4f;
+          --accent2: #4dd4a3;
+        }
+
+        html[data-theme="tokyo-night"] {
+          --background0: #0b1020;
+          --background1: #0f1630;
+          --background2: #151f3f;
+          --background3: #1b2850;
+
+          --foreground0: #d7e0ff;
+          --foreground1: #aab7e6;
+          --foreground2: #7f90c8;
+
+          --box-border-color: var(--foreground2);
+          --table-border-color: var(--foreground2);
+          --separator-color: var(--foreground2);
+
+          --accent: #7aa2f7;
+          --accent2: #9ece6a;
+        }
+
+        html[data-theme="dracula"] {
+          --background0: #0f0b16;
+          --background1: #181226;
+          --background2: #221a35;
+          --background3: #2d2347;
+
+          --foreground0: #f8f8f2;
+          --foreground1: #cfcfe6;
+          --foreground2: #a7a7c7;
+
+          --box-border-color: var(--foreground2);
+          --table-border-color: var(--foreground2);
+          --separator-color: var(--foreground2);
+
+          --accent: #bd93f9;
+          --accent2: #50fa7b;
+        }
+
+        html[data-theme="monokai"] {
+          --background0: #0d0f0d;
+          --background1: #141814;
+          --background2: #1a201a;
+          --background3: #223022;
+
+          --foreground0: #f8f8f2;
+          --foreground1: #d6d6cf;
+          --foreground2: #b0b0a6;
+
+          --box-border-color: var(--foreground2);
+          --table-border-color: var(--foreground2);
+          --separator-color: var(--foreground2);
+
+          --accent: #a6e22e;
+          --accent2: #fd971f;
+        }
+      }
+
+      /* Page scaffolding: closer to stefvuck spacing */
+      .wrap {
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 18px 18px 10px;
+      }
+
+      .topbar {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+
+      .brand {
+        font-weight: 700;
+        letter-spacing: 0.2px;
+      }
+
+      .theme-picker {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--foreground1);
+      }
+
+      .theme-picker button {
+        background: transparent;
+        border: 1px solid var(--foreground2);
+        color: var(--foreground1);
+        padding: 2px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+
+      .theme-name {
+        min-width: 110px;
+        text-align: center;
+        color: var(--foreground0);
+      }
+
+      .right-slot {
+        justify-self: end;
+        color: var(--foreground2);
+      }
+
+      .terminal {
+        white-space: pre-wrap;
+        line-height: 1.45;
+        margin-top: 10px;
+      }
+      .prompt { color: var(--foreground1); }
+      .cmd { color: var(--foreground0); }
+      .path { color: var(--accent); }
+      .cursor {
+        display: inline-block;
+        width: 10px;
+        transform: translateY(1px);
+        animation: blink 1s steps(1) infinite;
+      }
+      @keyframes blink { 50% { opacity: 0; } }
+
+      .cta-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 14px;
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-top: 14px;
+      }
+      @media (max-width: 800px) {
+        .topbar { grid-template-columns: 1fr; }
+        .right-slot { justify-self: start; }
+        .stats { grid-template-columns: 1fr; }
+      }
+
+      .stat-num {
+        font-size: 26px;
+        font-weight: 800;
+        line-height: 1.1;
+      }
+      .muted { color: var(--foreground1); }
+
+      /* Bottom statusline (vim-ish) */
+      .statusline {
+        display: flex;
+        justify-content: space-between;
+        gap: 14px;
+        padding-top: 10px;
+        color: var(--foreground2);
+        font-size: 14px;
+      }
+
+      /* Help overlay */
+      .overlay {
+        position: fixed;
+        inset: 0;
+        background: color-mix(in srgb, var(--background0) 80%, transparent);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 18px;
+      }
+      .overlay.open { display: flex; }
+
+      .kbd {
+        padding: 0 7px;
+        border: 1px solid var(--foreground2);
+        border-radius: 6px;
+        color: var(--foreground0);
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="wrap">
+      <header class="topbar">
+        <div class="brand">ABOUT ME BENJAMIN</div>
+
+        <div class="theme-picker">
+          <button id="prevTheme" aria-label="Previous theme">‹</button>
+          <div class="theme-name" id="themeLabel">Chocolate</div>
+          <button id="nextTheme" aria-label="Next theme">›</button>
+        </div>
+
+        <div class="right-slot">
+          <span class="muted">Press</span> <span class="kbd">?</span> <span class="muted">for help</span>
+        </div>
+      </header>
+
+   <section box-="square">
+  <div class="terminal" id="terminal">
+    <span class="prompt">$</span> <span class="cmd">cat</span> <span class="path">/home/benjamin/about.txt</span>
+
+    Hi, I’m <span style="color:var(--accent2);font-weight:700;">Benjamin Italiaander</span>.
+    Linux fanatic • Infra / Security / Open Source • Western Europe
+
+    <span class="prompt">$</span> <span class="cmd">open</span> about --readable <span class="cursor">█</span>
+  </div>
+
+  <div is-="separator" style="margin:14px 0;"></div>
+
+  <div class="content-grid">
+    <section box-="square" class="card">
+      <h2 style="margin-top:0;">About</h2>
+      <p class="muted">
+        Based in Western Europe, I primarily collaborate with research institutes, universities,
+        and government agencies across the Netherlands, Belgium, and Germany.
+      </p>
+      <p class="muted">
+        I help organizations take back ownership and control over their data by designing
+        open-source-first platforms and sovereign hosting environments.
+      </p>
+    </section>
+
+    <section box-="square" class="card">
+      <h2 style="margin-top:0;">What I’m building</h2>
+      <blockquote class="quote">
+        Over the past decade, major tech companies have accumulated vast amounts of data within
+        their cloud platforms. More institutions are now weighing the risks: security, control,
+        and ownership.
+      </blockquote>
+
+      <p class="muted">
+        I’m developing a practical blueprint for building independent digital collaboration hubs
+        (email, identity, enterprise apps, and infrastructure) with a strong focus on rollout strategy
+        and operational reality.
+      </p>
+
+      <p class="muted">
+        I’m fortunate that
+        <a href="https://www.cwi.nl/en/" target="_blank" rel="noreferrer">CWI</a>
+        is giving me space to help realize this vision.
+      </p>
+    </section>
+
+    <section box-="square" class="card">
+      <h2 style="margin-top:0;">Publications & profiles</h2>
+      <ul class="links">
+        <li><strong>PLOS</strong> — <a href="https://journals.plos.org" target="_blank" rel="noreferrer">journals.plos.org</a></li>
+        <li><strong>KNAW Pure Repository</strong> — <a href="https://pure.knaw.nl" target="_blank" rel="noreferrer">pure.knaw.nl</a></li>
+        <li><strong>CWI Research Repository</strong> — <a href="https://ir.cwi.nl/" target="_blank" rel="noreferrer">ir.cwi.nl</a></li>
+        <li><strong>ResearchGate</strong> — <a href="https://www.researchgate.net/profile/Benjamin-Italiaander" target="_blank" rel="noreferrer">Profile</a></li>
+      </ul>
+    </section>
+
+    <section box-="square" class="card">
+      <h2 style="margin-top:0;">Quick focus</h2>
+      <table>
+        <tbody>
+          <tr><td>Areas</td><td class="muted">Linux • Networking • Identity • Email • Security</td></tr>
+          <tr><td>Style</td><td class="muted">Pragmatic • Documented • Automation-friendly</td></tr>
+          <tr><td>Goal</td><td class="muted">Sovereign, maintainable platforms that teams can run</td></tr>
+        </tbody>
+      </table>
+
+    </section>
+  </div>
+</section>
+
+
+      <footer class="statusline">
+        <div id="leftStatus"> ~/ · # · index.html · utf-8</div>
+        <div id="rightStatus">Top 1:1</div>
+      </footer>
+    </div>
+
+    <!-- Help overlay -->
+    <div class="overlay" id="help">
+      <div box-="square" style="max-width:720px; width:100%;">
+        <h3 style="margin-top:0;">Keyboard Shortcuts</h3>
+        <div is-="separator" style="margin:12px 0;"></div>
+        <table>
+          <tbody>
+            <tr><td><span class="kbd">?</span></td><td class="muted">Toggle help</td></tr>
+            <tr><td><span class="kbd">t</span></td><td class="muted">Next theme</td></tr>
+            <tr><td><span class="kbd">Shift</span>+<span class="kbd">t</span></td><td class="muted">Previous theme</td></tr>
+            <tr><td><span class="kbd">Esc</span></td><td class="muted">Close help</td></tr>
+          </tbody>
+        </table>
+        
+    </div>
+
+    <script>
+      const THEMES = [
+        { key: "chocolate", label: "Chocolate" },
+        { key: "tokyo-night", label: "Tokyo Night" },
+        { key: "dracula", label: "Dracula" },
+        { key: "monokai", label: "Monokai" },
+      ];
+
+      const root = document.documentElement;
+      const label = document.getElementById("themeLabel");
+      const prevBtn = document.getElementById("prevTheme");
+      const nextBtn = document.getElementById("nextTheme");
+      const help = document.getElementById("help");
+
+      function getThemeIndex() {
+        const current = root.getAttribute("data-theme") || "chocolate";
+        return Math.max(0, THEMES.findIndex(t => t.key === current));
+      }
+
+      function setThemeByIndex(i) {
+        const idx = (i + THEMES.length) % THEMES.length;
+        root.setAttribute("data-theme", THEMES[idx].key);
+        label.textContent = THEMES[idx].label;
+      }
+
+      prevBtn.addEventListener("click", () => setThemeByIndex(getThemeIndex() - 1));
+      nextBtn.addEventListener("click", () => setThemeByIndex(getThemeIndex() + 1));
+
+      function toggleHelp(open) {
+        const isOpen = open ?? !help.classList.contains("open");
+        help.classList.toggle("open", isOpen);
+      }
+
+      window.addEventListener("keydown", (e) => {
+        if (e.key === "?") toggleHelp(true);
+        if (e.key === "Escape") toggleHelp(false);
+
+        if (e.key.toLowerCase() === "t") {
+          if (e.shiftKey) setThemeByIndex(getThemeIndex() - 1);
+          else setThemeByIndex(getThemeIndex() + 1);
+        }
+      });
+
+      help.addEventListener("click", (e) => {
+        if (e.target === help) toggleHelp(false);
+      });
+    </script>
+  </body>
+</html>
