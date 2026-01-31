@@ -41,6 +41,31 @@
         }
       }
 
+
+.facts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fact {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+}
+
+.fact .label {
+  min-width: 70px;
+  color: var(--foreground2);
+}
+
+.fact .value {
+  color: var(--foreground1);
+}
+
+
+
+
       .wrap {
         max-width: 980px;
         margin: 0 auto;
@@ -223,8 +248,7 @@
       <!-- Topbar / nav -->
       <header class="topbar">
         <div class="brand">
-          <span>Benjamin Italiaander</span>
-          <span class="sub">Linux security</span>
+          <span class="sub">I am Benjamin a Dutch Linux fanatic, living life one terminal command at a time.</span>
         </div>
 
         <nav class="nav" aria-label="Primary">
@@ -236,18 +260,15 @@
 
       <!-- PAGE: HOME -->
       <main id="page-home" class="page">
-        <section box-="square">
-          <div class="terminal">
-<span class="prompt">$</span> <span class="cmd">cat</span> <span class="path">/home/benjamin/about.txt</span>
 
-Hi, I’m <span style="color:var(--accent2);font-weight:700;">Benjamin Italiaander</span>.
-Linux fanatic • Infra / Security / Open Source • Western Europe
+        <section style="margin:0; box-="square">
 
-<span class="prompt">$</span> <span class="cmd">open</span> links --quick <span class="cursor">█</span>
+          
+          <div style="margin:0; class="terminal" id="homeTerminal">
+            <pre id="typeTarget" style="margin:0; white-space:pre-wrap;"></pre>
           </div>
-
-          <div is-="separator" style="margin:14px 0;"></div>
-
+          
+          
           <div class="grid-2">
             <section box-="square" class="card">
               <h2>About</h2>
@@ -278,11 +299,12 @@ Linux fanatic • Infra / Security / Open Source • Western Europe
 
             <section box-="square" class="card">
               <h2>What I’m building</h2>
-              <div class="quote">
+              <div class="wrap">
                 I’m developing a practical blueprint for independent digital collaboration hubs
                 (email, identity, enterprise apps, and infrastructure), focused on rollout strategy
                 and operational reality.
-              </div>
+                </div>
+              
               <p class="muted">
                 I’m fortunate that
                 <a class="inline" href="https://www.cwi.nl/en/" target="_blank" rel="noreferrer">CWI</a>
@@ -291,14 +313,27 @@ Linux fanatic • Infra / Security / Open Source • Western Europe
             </section>
 
             <section box-="square" class="card">
-              <h2>Quick focus</h2>
-              <table>
-                <tbody>
-                  <tr><td>Areas</td><td class="muted">Linux • Networking • Identity • Email • Security</td></tr>
-                  <tr><td>Style</td><td class="muted">Pragmatic • Documented • Automation-friendly</td></tr>
-                  <tr><td>Goal</td><td class="muted">Sovereign, maintainable platforms teams can run</td></tr>
-                </tbody>
-              </table>
+
+
+              <div class="facts">
+  <div class="fact">
+    <span class="label">Areas</span>
+    <span class="value">Linux • Networking • Identity • Email • Security</span>
+  </div>
+  <div class="fact">
+    <span class="label">Style</span>
+    <span class="value">Pragmatic • Documented • Automation-friendly</span>
+  </div>
+  <div class="fact">
+    <span class="label">Goal</span>
+    <span class="value">Sovereign, maintainable platforms teams can run</span>
+  </div>
+</div>
+
+
+
+
+
             </section>
           </div>
         </section>
@@ -354,6 +389,12 @@ Linux fanatic • Infra / Security / Open Source • Western Europe
               <pre id="result" class="out"></pre>
             <h2 style="font-size:16px; margin:14px 0 10px;">Errors / debug</h2>
             <pre id="debug" class="out"></pre>
+
+
+
+
+
+            
 
           </div>
 
@@ -528,6 +569,7 @@ kWDBC4nTupLp3s/jb5ZoVfZhbOtsluy33AMq6J+Neg==
               If you paste a PGP block in your email, please include a short non-sensitive line like:
               “Encrypted message for Benjamin” so I don’t miss it.
             </div>
+
           </div>
         </section>
       </main>
@@ -664,6 +706,119 @@ kWDBC4nTupLp3s/jb5ZoVfZhbOtsluy33AMq6J+Neg==
       clearBtn.addEventListener("click", clearAll);
 
       loadPublicKeyFromHtml();
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    // ---------- Typewriter (auto-typing) ----------
+const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+
+const typeTarget = document.getElementById("typeTarget");
+const homeTerminal = document.getElementById("homeTerminal");
+
+// Your terminal text (supports basic HTML spans you already use)
+const TERMINAL_HTML = `Hi, I’m <span style="color:var(--accent2);font-weight:700;">Benjamin Italiaander</span>.
+Linux fanatic • Infra / Security / Open Source • Western Europe
+
+<span class="prompt"></span><span class="cmd">~$</span><span class="cursor"> _ </span>
+`.trim();
+
+let typingStarted = false;
+let typingDone = false;
+let typingAbort = false;
+
+function renderInstant() {
+  if (!typeTarget) return;
+  typeTarget.innerHTML = TERMINAL_HTML;
+  typingDone = true;
+}
+
+async function typeHtmlLikeTerminal(html, speed = 12) {
+  // Types text nodes char-by-char, but inserts tags instantly.
+  // This keeps your <span class="prompt"> etc. working.
+  const container = document.createElement("div");
+  container.innerHTML = html;
+
+  typeTarget.innerHTML = "";
+
+  // Flatten nodes in-order
+  async function walk(node, outParent) {
+    if (typingAbort) return;
+
+    if (node.nodeType === Node.TEXT_NODE) {
+      const text = node.textContent || "";
+      for (let i = 0; i < text.length; i++) {
+        if (typingAbort) return;
+        outParent.append(text[i]);
+        await new Promise(r => setTimeout(r, speed));
+      }
+      return;
+    }
+
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      const el = node.cloneNode(false); // clone tag, not children
+      outParent.appendChild(el);
+      for (const child of node.childNodes) {
+        await walk(child, el);
+        if (typingAbort) return;
+      }
+      return;
+    }
+  }
+
+  for (const child of container.childNodes) {
+    await walk(child, typeTarget);
+    if (typingAbort) return;
+  }
+
+  typingDone = true;
+}
+
+function startTypingIfOnHome() {
+  if (!typeTarget || typingStarted || typingDone) return;
+  if (location.hash !== "#home") return;
+
+  typingStarted = true;
+  typingAbort = false;
+
+  if (prefersReducedMotion) {
+    renderInstant();
+  } else {
+    typeHtmlLikeTerminal(TERMINAL_HTML, 10).catch(() => renderInstant());
+  }
+}
+
+// Skip typing on click or Escape
+function skipTyping() {
+  if (typingDone) return;
+  typingAbort = true;
+  renderInstant();
+}
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") skipTyping();
+});
+if (homeTerminal) {
+  homeTerminal.addEventListener("click", skipTyping);
+}
+
+// Start when page first loads, and also when navigating back to #home
+window.addEventListener("hashchange", () => {
+  // If you want it to re-type every time you return to home, set:
+  // typingStarted = false; typingDone = false;
+  startTypingIfOnHome();
+});
+
+// Initial start
+startTypingIfOnHome();
+
     </script>
   </body>
 </html>
